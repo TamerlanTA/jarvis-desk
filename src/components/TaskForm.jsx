@@ -24,7 +24,12 @@ export default function TaskForm({ task, onSave, onClose }) {
   }
 
   return (
-    <dialog className="task-dialog" ref={(node) => { if (node && !node.open) node.showModal(); }} onCancel={onClose} aria-labelledby="task-form-heading">
+    <dialog className="task-dialog" ref={(node) => {
+      if (node && !node.open) {
+        node.showModal();
+        node.querySelector('input')?.focus();
+      }
+    }} onCancel={onClose} aria-labelledby="task-form-heading">
       <div className="dialog-heading">
         <h2 id="task-form-heading">{task ? 'Редактировать задачу' : 'Новая задача'}</h2>
         <button type="button" className="icon-button" onClick={onClose} aria-label="Закрыть форму"><Icon name="close" /></button>

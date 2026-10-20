@@ -6,19 +6,23 @@ import TaskList from './components/TaskList.jsx';
 import TaskForm from './components/TaskForm.jsx';
 import DeleteDialog from './components/DeleteDialog.jsx';
 import Icon from './components/Icon.jsx';
-import { createInitialTasks } from './utils/tasks.js';
+import FocusTimer from './components/FocusTimer.jsx';
+import WeatherWidget from './components/WeatherWidget.jsx';
+import useStoredTasks from './hooks/useStoredTasks.js';
+import useDebouncedValue from './hooks/useDebouncedValue.js';
 
 export default function App() {
-  const [tasks, setTasks] = useState(createInitialTasks);
+  const { tasks, setTasks, isLoaded, storageError } = useStoredTasks();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('Все');
   const [status, setStatus] = useState('all');
   const [formTask, setFormTask] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deleteTask, setDeleteTask] = useState(null);
+  const debouncedSearch = useDebouncedValue(search);
 
   const visibleTasks = tasks.filter((task) => (
-    task.title.toLocaleLowerCase('ru').includes(search.trim().toLocaleLowerCase('ru'))
+    task.title.toLocaleLowerCase('ru').includes(debouncedSearch.trim().toLocaleLowerCase('ru'))
     && (category === 'Все' || task.category === category)
     && (status === 'all' || (status === 'completed' ? task.completed : !task.completed))
   ));
@@ -33,6 +37,7 @@ export default function App() {
       ? current.map((task) => task.id === formTask.id ? { ...task, ...values } : task)
       : [...current, { ...values, id: crypto.randomUUID(), completed: false }]);
     setIsFormOpen(false);
+    resetFilters();
   }
 
   function toggleTask(id) {
@@ -60,12 +65,17 @@ export default function App() {
           <section className="panel tasks-panel" aria-labelledby="tasks-heading">
             <div className="panel-heading">
               <h2 id="tasks-heading">Мои задачи</h2>
-              <button className="primary-button" type="button" onClick={() => openForm()}><Icon name="plus" />Новая задача</button>
+              <button className="primary-button" type="button" disabled={!isLoaded} onClick={() => openForm()}><Icon name="plus" />Новая задача</button>
             </div>
             <TaskSummary tasks={tasks} />
+            {storageError && <p className="storage-warning" role="alert">{storageError}</p>}
             <TaskFilters search={search} onSearchChange={setSearch} category={category} onCategoryChange={setCategory} status={status} onStatusChange={setStatus} />
-            <TaskList tasks={visibleTasks} totalCount={tasks.length} onToggle={toggleTask} onEdit={openForm} onDelete={setDeleteTask} onResetFilters={resetFilters} />
+            {isLoaded ? <TaskList tasks={visibleTasks} totalCount={tasks.length} onToggle={toggleTask} onEdit={openForm} onDelete={setDeleteTask} onResetFilters={resetFilters} /> : <p role="status">Загружаем задачи…</p>}
           </section>
+          <aside className="utility-rail" aria-label="Фокус и погода">
+            <FocusTimer />
+            <WeatherWidget />
+          </aside>
         </div>
         <footer>Меньше шума. Больше сделанного.</footer>
       </main>

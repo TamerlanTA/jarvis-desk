@@ -1,0 +1,38 @@
+:root {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f3f4ef;
+  background: #111310;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --bg: #111310;
+  --surface: #191c17;
+  --border: #383e32;
+  --muted: #b4b9b0;
+  --accent: #d0ee94;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button, input, select { font: inherit; }
+a { color: inherit; }
+button, a, input, select { -webkit-tap-highlight-color: transparent; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.site-header { border-bottom: 1px solid var(--border); }
+.header-inner { max-width: 1360px; margin: auto; padding: 24px 0; display: flex; justify-content: space-between; align-items: center; }
+.brand { display: flex; align-items: center; gap: 18px; text-decoration: none; font-size: 26px; font-weight: 700; letter-spacing: -1px; }
+.brand-mark { display: grid; place-items: center; width: 38px; height: 38px; background: var(--accent); color: var(--bg); border-radius: 9px; font-size: 28px; font-weight: 900; }
+.header-caption { font-size: 16px; }
+.workspace { max-width: 1360px; margin: auto; }
+.intro { padding: 34px 0 30px; }
+h1 { margin: 0 0 10px; font-size: clamp(32px, 3.5vw, 52px); letter-spacing: -1.9px; line-height: 1.16; }
+.intro p { margin: 0; color: var(--muted); font-size: 24px; line-height: 1.5; }
+@media (max-width: 1440px) { .header-inner, .workspace { margin-inline: 40px; } }
+@media (max-width: 600px) {
+  .header-inner, .workspace { margin-inline: 20px; }
+  .header-inner { padding-block: 20px; }
+  .brand { font-size: 23px; gap: 12px; }
+  .header-caption { font-size: 12px; max-width: 95px; text-align: right; }
+  .intro { padding-top: 28px; }
+  h1 { letter-spacing: -1.2px; }
+  .intro p { font-size: 17px; }
+}

@@ -1,14 +1,14 @@
-# Task 4. Effects — Jarvis Desk
+# Task 4. Effects — Klick Desk
 
 В проекте пять вызовов `useEffect`. Каждый синхронизирует React с внешним состоянием или временем. Логика выполняется в работающем приложении.
 
-| № | Файл | Зависимости | Внешняя система | Cleanup |
-| --- | --- | --- | --- | --- |
-| 1 | `src/hooks/useStoredTasks.js` — первый effect | `[]` | чтение `localStorage` при старте | не нужен: синхронная операция |
-| 2 | `src/hooks/useStoredTasks.js` — второй effect | `[tasks, canSave]` | запись изменённого списка в `localStorage` | не нужен: синхронная операция |
-| 3 | `src/components/WeatherWidget.jsx` | `[requestNumber]` | HTTP-запрос Open-Meteo и 12-секундный таймаут | `controller.abort()`, `clearTimeout`, флаг `isActive = false` |
-| 4 | `src/components/FocusTimer.jsx` | `[endsAt]` | системные часы и интервал | `clearInterval(intervalId)` |
-| 5 | `src/hooks/useDebouncedValue.js` | `[value, delay]` | таймаут debounce поиска | `clearTimeout(timeoutId)` |
+| №   | Файл                                          | Зависимости                 | Внешняя система                               | Cleanup                                                       |
+| --- | --------------------------------------------- | --------------------------- | --------------------------------------------- | ------------------------------------------------------------- |
+| 1   | `src/hooks/useStoredTasks.js` — первый effect | `[]`                        | чтение `localStorage` при старте              | не нужен: синхронная операция                                 |
+| 2   | `src/hooks/useStoredTasks.js` — второй effect | `[tasks, canSave]`          | запись изменённого списка в `localStorage`    | не нужен: синхронная операция                                 |
+| 3   | `src/components/WeatherWidget.jsx`            | `[requestNumber]`           | HTTP-запрос Open-Meteo и 12-секундный таймаут | `controller.abort()`, `clearTimeout`, флаг `isActive = false` |
+| 4   | `src/components/FocusTimer.jsx`               | `[endsAt, onRunningChange]` | системные часы и интервал                     | `clearInterval(intervalId)`                                   |
+| 5   | `src/hooks/useDebouncedValue.js`              | `[value, delay]`            | таймаут debounce поиска                       | `clearTimeout(timeoutId)`                                     |
 
 ## 1–2. Загрузка и сохранение
 
@@ -28,7 +28,7 @@
 
 ## 4. Таймер и cleanup
 
-Обработчик старта вычисляет абсолютное время окончания: `Date.now() + secondsLeft * 1000`. Effect зависит от `endsAt`. Когда `endsAt === null`, интервал не создаётся.
+Обработчик старта вычисляет абсолютное время окончания: `Date.now() + secondsLeft * 1000`. Effect зависит от `endsAt` и callback `onRunningChange`. Callback сообщает App о начале и завершении фокуса, чтобы обновить маскота; в App передаётся стабильный setter состояния. Когда `endsAt === null`, интервал не создаётся.
 
 Каждые 200 мс вычисляется остаток от системного времени. Это уменьшает погрешность, возникающую при замедлении таймеров в фоновой вкладке. На нуле значение ограничивается `0`, таймер останавливается и выводит сообщение о завершении.
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "./components/Header.jsx";
 import TaskSummary from "./components/TaskSummary.jsx";
 import TaskFilters from "./components/TaskFilters.jsx";
@@ -11,9 +11,7 @@ import Icon from "./components/Icon.jsx";
 import FocusTimer from "./components/FocusTimer.jsx";
 import WeatherWidget from "./components/WeatherWidget.jsx";
 import Mascot from "./components/Mascot.jsx";
-import useTasks from "./hooks/useTasks.js";
-import useTaskSettings from "./hooks/useTaskSettings.js";
-import useDebouncedValue from "./hooks/useDebouncedValue.js";
+import { readSettings, saveSettings } from "./api/settingsApi.js";
 import { taskApi } from "./api/taskApi.js";
 
 export default function App() {
@@ -29,16 +27,46 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState("");
   const [notice, setNotice] = useState("");
-  const { sort, setSort, pageSize, setPageSize } = useTaskSettings();
-  const debouncedSearch = useDebouncedValue(search);
-  const { result, loadState, error, reload } = useTasks({
-    search: debouncedSearch,
-    category,
-    status,
-    sort,
-    page,
-    pageSize,
+  const [settings] = useState(readSettings);
+  const [sort, setSort] = useState(settings.sort);
+  const [pageSize, setPageSize] = useState(settings.pageSize);
+  const [result, setResult] = useState({
+    items: [], total: 0, page: 1, pageSize: settings.pageSize,
+    totalPages: 1, summary: { total: 0, completed: 0 },
   });
+  const [loadState, setLoadState] = useState("loading");
+  const [error, setError] = useState("");
+  const [revision, setRevision] = useState(0);
+
+  useEffect(() => {
+    saveSettings({ sort, pageSize });
+  }, [sort, pageSize]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    setLoadState("loading");
+    setError("");
+    taskApi.list({ search, category, status, sort, page, pageSize,
+      signal: controller.signal,
+    }).then((data) => {
+      if (!active) return;
+      setResult(data);
+      setLoadState("success");
+    }).catch((failure) => {
+      if (!active || failure.name === "AbortError") return;
+      setError(failure.message);
+      setLoadState("error");
+    });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [search, category, status, sort, page, pageSize, revision]);
+
+  function reload() {
+    setRevision((value) => value + 1);
+  }
 
   function changeFilter(setter, value) {
     setter(value);
@@ -62,6 +90,7 @@ export default function App() {
   }
 
   async function saveTask(values) {
+    if (busy) return;
     setBusy(true);
     try {
       if (formTask) await taskApi.update(formTask.id, values);
@@ -79,16 +108,20 @@ export default function App() {
   }
 
   async function toggleTask(task) {
+    if (busy) return null;
+    const itemId = task.id;
     setBusy(true);
     setActionError("");
     try {
-      await taskApi.update(task.id, { completed: !task.completed });
+      const updated = await taskApi.update(itemId, { completed: !task.completed });
       setNotice(
         task.completed ? "Задача возвращена в работу." : "Задача выполнена.",
       );
       reload();
+      return updated;
     } catch (failure) {
       setActionError(failure.message);
+      return null;
     } finally {
       setBusy(false);
     }
@@ -100,10 +133,12 @@ export default function App() {
   }
 
   async function confirmDelete() {
+    if (busy || !deleteTask) return;
+    const itemId = deleteTask.id;
     setBusy(true);
     setActionError("");
     try {
-      await taskApi.remove(deleteTask.id);
+      await taskApi.remove(itemId);
       setDeleteTask(null);
       setSelectedId(null);
       setNotice("Задача удалена.");
@@ -148,6 +183,15 @@ export default function App() {
           >
             <div className="panel-heading">
               <h2 id="tasks-heading">Мои задачи</h2>
+              <button className="secondary-button" type="button"
+                disabled={busy || loadState === "loading"} onClick={reload}>
+                Обновить список
+              </button>
+              <button className="text-button" type="button"
+                disabled={busy || loadState === "loading"}
+                onClick={() => { taskApi.failNextRequest(); reload(); }}>
+                Проверить ошибку API
+              </button>
               {!isFormOpen && (
                 <button
                   className="primary-button"
@@ -197,6 +241,8 @@ export default function App() {
                 onBack={() => setSelectedId(null)}
                 onEdit={openForm}
                 onDelete={requestDelete}
+                onToggle={toggleTask}
+                busy={busy}
               />
             ) : (
               <>

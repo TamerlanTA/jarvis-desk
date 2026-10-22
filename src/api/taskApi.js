@@ -4,8 +4,13 @@ import { isValidTask, validateTask, PRIORITIES } from "../utils/tasks.js";
 export const TASKS_KEY = "klick-desk.tasks.v2";
 const LEGACY_KEY = "jarvis-desk.tasks.v1";
 
+let failNext = false;
+
 // Задержка имитирует сеть; отмена запроса не допускает поздних изменений.
 async function request(action, { signal } = {}) {
+  const shouldFail = failNext;
+  failNext = false;
+  const delay = 200 + Math.floor(Math.random() * 500);
   await new Promise((resolve, reject) => {
     if (signal?.aborted) {
       reject(new DOMException("Запрос отменён", "AbortError"));
@@ -18,10 +23,13 @@ async function request(action, { signal } = {}) {
     const timeout = setTimeout(() => {
       signal?.removeEventListener("abort", abort);
       resolve();
-    }, 250);
+    }, delay);
     signal?.addEventListener("abort", abort, { once: true });
   });
   if (signal?.aborted) throw new DOMException("Запрос отменён", "AbortError");
+  if (shouldFail || Math.random() < 0.05) {
+    throw new Error("Временная ошибка API. Повтори запрос.");
+  }
   return JSON.parse(JSON.stringify(action()));
 }
 
@@ -83,6 +91,7 @@ function validate(values) {
 }
 
 export const taskApi = {
+  failNextRequest() { failNext = true; },
   list({
     search = "",
     category = "Все",
@@ -123,7 +132,9 @@ export const taskApi = {
           Math.max(1, Math.trunc(page) || 1),
         );
         return {
-          items: filtered.slice((currentPage - 1) * size, currentPage * size),
+          items: filtered.slice((currentPage - 1) * size, currentPage * size)
+            .map(({ id, title, description, category, priority, dueDate, completed }) =>
+              ({ id, title, description, category, priority, dueDate, completed })),
           total: filtered.length,
           page: currentPage,
           pageSize: size,

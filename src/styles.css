@@ -185,6 +185,7 @@ h1 {
   min-width: 0;
 }
 .panel-heading {
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1197,4 +1198,10 @@ input::placeholder {
   .pagination-buttons button {
     padding: 8px 10px;
   }
+}
+
+.tasks-panel > .panel-heading h2 { flex: 1 1 100%; }
+.tasks-panel > .panel-heading { justify-content: flex-start; }
+@media (max-width: 480px) {
+  .tasks-panel > .panel-heading > button { flex: 1 1 auto; }
 }

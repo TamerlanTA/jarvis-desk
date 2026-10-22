@@ -3,11 +3,9 @@ import {
   act,
   fireEvent,
   render,
-  renderHook,
   screen,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import useDebouncedValue from "../src/hooks/useDebouncedValue.js";
 import FocusTimer from "../src/components/FocusTimer.jsx";
 import WeatherWidget from "../src/components/WeatherWidget.jsx";
 import { validateTask } from "../src/utils/tasks.js";
@@ -65,26 +63,6 @@ describe("timer cleanup", () => {
     fireEvent.click(screen.getByRole("button", { name: "15 мин" }));
     expect(screen.getByRole("timer").textContent).toBe("15:00");
     expect(screen.getByRole("button", { name: "Начать" })).toBeTruthy();
-    expect(vi.getTimerCount()).toBe(0);
-  });
-});
-
-describe("debounce cleanup", () => {
-  it("cancels the previous timeout during typing and the final timeout on unmount", () => {
-    vi.useFakeTimers();
-    const { result, rerender, unmount } = renderHook(
-      ({ query }) => useDebouncedValue(query),
-      { initialProps: { query: "" } },
-    );
-    rerender({ query: "ре" });
-    act(() => vi.advanceTimersByTime(200));
-    rerender({ query: "реакт" });
-    act(() => vi.advanceTimersByTime(299));
-    expect(result.current).toBe("");
-    act(() => vi.advanceTimersByTime(1));
-    expect(result.current).toBe("реакт");
-    rerender({ query: "другой запрос" });
-    unmount();
     expect(vi.getTimerCount()).toBe(0);
   });
 });

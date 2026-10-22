@@ -3,19 +3,18 @@ import {
   act,
   fireEvent,
   render,
-  renderHook,
   screen,
   waitFor,
   within,
 } from "@testing-library/react";
 import { beforeEach, afterEach, it, expect, vi } from "vitest";
 import App from "../src/App.jsx";
-import useTasks from "../src/hooks/useTasks.js";
-import useTaskSettings from "../src/hooks/useTaskSettings.js";
+import TaskDetails from "../src/components/TaskDetails.jsx";
 import { taskApi, TASKS_KEY } from "../src/api/taskApi.js";
 import initialTasks from "../src/data/tasks.json";
 
 beforeEach(() => {
+  vi.spyOn(Math, "random").mockReturnValue(0.5);
   localStorage.clear();
   vi.stubGlobal(
     "fetch",
@@ -38,46 +37,26 @@ afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
-const query = {
-  search: "",
-  category: "Все",
-  status: "all",
-  sort: "newest",
-  page: 1,
-  pageSize: 6,
-};
-
-it("ignores stale list responses even if a provider ignores AbortSignal", async () => {
+it("ignores outdated details when switching tasks even if the API ignores abort", async () => {
   const pending = [];
-  vi.spyOn(taskApi, "list").mockImplementation(
+  vi.spyOn(taskApi, "get").mockImplementation(
     () => new Promise((resolve) => pending.push(resolve)),
   );
-  const { result, rerender } = renderHook((props) => useTasks(props), {
-    initialProps: query,
-  });
-  rerender({ ...query, search: "новый" });
-  const latest = {
-    items: [{ id: "new" }],
-    total: 1,
-    summary: { total: 100, completed: 20 },
-  };
-  await act(async () => pending[1](latest));
-  await act(async () => pending[0]({ ...latest, items: [{ id: "stale" }] }));
-  expect(result.current.result.items[0].id).toBe("new");
+  const props = { onBack: vi.fn(), onEdit: vi.fn(), onDelete: vi.fn(), onToggle: vi.fn(), busy: false };
+  const { rerender } = render(<TaskDetails id="old" {...props} />);
+  rerender(<TaskDetails id="new" {...props} />);
+  await act(async () => pending[1]({ ...initialTasks[0], id: "new", title: "Актуальная задача" }));
+  await act(async () => pending[0]({ ...initialTasks[1], id: "old", title: "Устаревшая задача" }));
+  expect(screen.getByRole("heading", { name: "Актуальная задача" })).toBeTruthy();
+  expect(screen.queryByText("Устаревшая задача")).toBe(null);
 });
 
-it("reads saved settings before writing defaults and persists changes", () => {
-  localStorage.setItem(
-    "klick-desk.settings.v1",
-    JSON.stringify({ sort: "title", pageSize: 24 }),
-  );
-  const { result } = renderHook(useTaskSettings, { wrapper: StrictMode });
-  expect(result.current.sort).toBe("title");
-  expect(result.current.pageSize).toBe(24);
-  act(() => result.current.setPageSize(12));
-  expect(
-    JSON.parse(localStorage.getItem("klick-desk.settings.v1")).pageSize,
-  ).toBe(12);
+it("loads saved settings and persists changes without component storage access", async () => {
+  localStorage.setItem("klick-desk.settings.v1", JSON.stringify({ sort: "title", pageSize: 24 }));
+  render(<StrictMode><App /></StrictMode>);
+  await screen.findByRole("list", { name: "Задачи" });
+  expect(screen.getByLabelText("Сортировка задач").value).toBe("title");
+  expect(JSON.parse(localStorage.getItem("klick-desk.settings.v1")).pageSize).toBe(24);
 });
 
 it("paginates, resets filters to page one, opens detail and edits a task", async () => {
@@ -187,4 +166,30 @@ it("shows an empty main list without fake pagination", async () => {
   expect(screen.getByAltText("Маскот Клик").getAttribute("src")).toContain(
     "idle",
   );
+});
+
+it("reloads through a simulated error and retries successfully", async () => {
+  render(<App />);
+  await screen.findByRole("list", { name: "Задачи" });
+  fireEvent.click(screen.getByRole("button", { name: "Проверить ошибку API" }));
+  expect(await screen.findByText(/Временная ошибка API/)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Повторить загрузку задач" }));
+  expect(await screen.findByRole("list", { name: "Задачи" })).toBeTruthy();
+});
+
+it("finishes the captured task after leaving details without changing another task", async () => {
+  render(<App />);
+  const list = await screen.findByRole("list", { name: "Задачи" });
+  const original = JSON.parse(localStorage.getItem(TASKS_KEY)).tasks;
+  const first = original.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.id.localeCompare(b.id))[0];
+  fireEvent.click(within(list).getAllByRole("button")[0]);
+  await screen.findByRole("button", { name: "Редактировать задачу" });
+  const action = screen.getByRole("button", { name: first.completed ? "Вернуть в работу" : "Отметить выполненной" });
+  fireEvent.click(action);
+  expect(screen.getByRole("button", { name: "Сохраняем…" }).disabled).toBe(true);
+  fireEvent.click(screen.getByRole("button", { name: /Назад к списку/ }));
+  await screen.findByText(first.completed ? "Задача возвращена в работу." : "Задача выполнена.");
+  const saved = JSON.parse(localStorage.getItem(TASKS_KEY)).tasks;
+  expect(saved.find((task) => task.id === first.id).completed).toBe(!first.completed);
+  expect(saved.filter((task) => task.id !== first.id)).toEqual(original.filter((task) => task.id !== first.id));
 });

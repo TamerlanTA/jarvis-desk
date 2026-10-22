@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { taskApi } from "../api/taskApi.js";
 import { formatDueDate } from "../utils/tasks.js";
 
-export default function TaskDetails({ id, onBack, onEdit, onDelete }) {
+export default function TaskDetails({ id, onBack, onEdit, onDelete, onToggle, busy }) {
   const [task, setTask] = useState(null);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
@@ -72,14 +72,29 @@ export default function TaskDetails({ id, onBack, onEdit, onDelete }) {
               <dd>{task.completed ? "Готово" : "В работе"}</dd>
             </div>
             <div>
+              <dt>Создана</dt>
+              <dd>{task.createdAt && Number.isFinite(Date.parse(task.createdAt))
+                ? new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium", timeZone: "Asia/Almaty" }).format(new Date(task.createdAt))
+                : "Дата не сохранена"}</dd>
+            </div>
+            <div>
               <dt>ID</dt>
               <dd>{task.id}</dd>
             </div>
           </dl>
           <div className="detail-actions">
+            <button type="button" className="primary-button" disabled={busy}
+              onClick={async () => {
+                // ID и состояние берутся из снимка задачи в момент клика.
+                const updated = await onToggle(task);
+                if (updated && updated.id === id) setTask(updated);
+              }}>
+              {busy ? "Сохраняем…" : task.completed ? "Вернуть в работу" : "Отметить выполненной"}
+            </button>
             <button
               type="button"
               className="primary-button"
+              disabled={busy}
               onClick={() => onEdit(task)}
             >
               Редактировать задачу
@@ -87,6 +102,7 @@ export default function TaskDetails({ id, onBack, onEdit, onDelete }) {
             <button
               type="button"
               className="secondary-button"
+              disabled={busy}
               onClick={() => onDelete(task)}
             >
               Удалить задачу

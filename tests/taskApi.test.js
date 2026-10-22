@@ -2,7 +2,10 @@ import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
 import { taskApi, TASKS_KEY } from "../src/api/taskApi.js";
 import initialTasks from "../src/data/tasks.json";
 
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+  localStorage.clear();
+  vi.spyOn(Math, "random").mockReturnValue(0.5);
+});
 afterEach(() => vi.restoreAllMocks());
 
 describe("simulated task API", () => {
@@ -35,7 +38,7 @@ describe("simulated task API", () => {
         (task) =>
           task.category === "Учёба" &&
           !task.completed &&
-          `${task.title} ${task.description}`
+          `${task.title} ${initialTasks.find((item) => item.id === task.id).description}`
             .toLowerCase()
             .includes("проверить"),
       ),
@@ -155,4 +158,23 @@ describe("simulated task API", () => {
     ).rejects.toThrow("сохранить");
     expect(localStorage.getItem(TASKS_KEY)).toBe(previous);
   });
+});
+
+
+it("returns lightweight list records and loads additional meaningful details", async () => {
+  const result = await taskApi.list();
+  expect(result.items[0].createdAt).toBeUndefined();
+  const details = await taskApi.get(result.items[0].id);
+  expect(details.description.length).toBeGreaterThan(0);
+  expect(Number.isFinite(Date.parse(details.createdAt))).toBe(true);
+});
+
+it("simulates random errors without committing writes and permits retry", async () => {
+  await taskApi.list();
+  const previous = localStorage.getItem(TASKS_KEY);
+  vi.spyOn(Math, "random").mockReturnValue(0.01);
+  await expect(taskApi.update("seed-001", { completed: true })).rejects.toThrow("Временная ошибка API");
+  expect(localStorage.getItem(TASKS_KEY)).toBe(previous);
+  vi.spyOn(Math, "random").mockReturnValue(0.5);
+  expect((await taskApi.update("seed-001", { completed: true })).completed).toBe(true);
 });

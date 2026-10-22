@@ -1,5 +1,5 @@
 {
-  "name": "jarvis-desk",
+  "name": "klick-desk",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -13,6 +13,7 @@
     "deploy": "gh-pages -d dist --nojekyll"
   },
   "dependencies": {
+    "@fontsource-variable/onest": "^5.3.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },

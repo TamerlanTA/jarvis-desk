@@ -1,5 +1,6 @@
 export const CATEGORIES = ["Агентство", "Контент", "Учёба"];
 export const PRIORITIES = ["Высокий", "Средний", "Низкий"];
+export const SORT_OPTIONS = ["newest", "dueDate", "priority", "title"];
 
 export function getAlmatyDate() {
   return new Intl.DateTimeFormat("en-CA", {
@@ -26,44 +27,6 @@ export function formatDueDate(value) {
   }).format(new Date(`${value}T12:00:00Z`));
 }
 
-export function createInitialTasks() {
-  const today = getAlmatyDate();
-  return [
-    {
-      id: "demo-1",
-      title: "Подготовить демо автоматизации",
-      category: "Агентство",
-      priority: "Высокий",
-      dueDate: today,
-      completed: false,
-    },
-    {
-      id: "demo-2",
-      title: "Собрать идеи для Reels",
-      category: "Контент",
-      priority: "Средний",
-      dueDate: today,
-      completed: false,
-    },
-    {
-      id: "demo-3",
-      title: "Подготовиться к защите React",
-      category: "Учёба",
-      priority: "Средний",
-      dueDate: today,
-      completed: false,
-    },
-    {
-      id: "demo-4",
-      title: "Разобрать входящие задачи",
-      category: "Агентство",
-      priority: "Низкий",
-      dueDate: today,
-      completed: true,
-    },
-  ];
-}
-
 export function validateTask(values) {
   const errors = {};
   if (values.title.trim().length < 3 || values.title.trim().length > 120) {
@@ -74,6 +37,12 @@ export function validateTask(values) {
   if (!PRIORITIES.includes(values.priority))
     errors.priority = "Выбери приоритет.";
   if (!isValidDate(values.dueDate)) errors.dueDate = "Укажи корректную дату.";
+  if (
+    values.description !== undefined &&
+    (typeof values.description !== "string" || values.description.length > 1000)
+  ) {
+    errors.description = "Описание должно содержать не более 1000 символов.";
+  }
   return errors;
 }
 

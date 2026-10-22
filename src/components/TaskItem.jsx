@@ -6,7 +6,14 @@ import {
 } from "../utils/tasks.js";
 import Icon from "./Icon.jsx";
 
-export default function TaskItem({ task, onToggle, onEdit, onDelete }) {
+export default function TaskItem({
+  task,
+  onToggle,
+  onEdit,
+  onDelete,
+  onSelect,
+  busy,
+}) {
   const overdue = !task.completed && task.dueDate < getAlmatyDate();
 
   return (
@@ -15,7 +22,8 @@ export default function TaskItem({ task, onToggle, onEdit, onDelete }) {
         <input
           type="checkbox"
           checked={task.completed}
-          onChange={() => onToggle(task.id)}
+          onChange={() => onToggle(task)}
+          disabled={busy}
           aria-label={`Выполнено: ${task.title}`}
         />
         <span className="check-visual">
@@ -23,7 +31,15 @@ export default function TaskItem({ task, onToggle, onEdit, onDelete }) {
         </span>
       </label>
       <div className="task-content">
-        <h3>{task.title}</h3>
+        <h3>
+          <button
+            className="task-title"
+            type="button"
+            onClick={() => onSelect(task.id)}
+          >
+            {task.title}
+          </button>
+        </h3>
         <div className="task-meta">
           <span
             className={`category-label category-${CATEGORIES.indexOf(task.category)}`}
@@ -50,6 +66,7 @@ export default function TaskItem({ task, onToggle, onEdit, onDelete }) {
           onClick={() => onEdit(task)}
           aria-label={`Редактировать: ${task.title}`}
           title="Редактировать"
+          disabled={busy}
         >
           <Icon name="edit" />
         </button>
@@ -59,6 +76,7 @@ export default function TaskItem({ task, onToggle, onEdit, onDelete }) {
           onClick={() => onDelete(task)}
           aria-label={`Удалить: ${task.title}`}
           title="Удалить"
+          disabled={busy}
         >
           <Icon name="trash" />
         </button>

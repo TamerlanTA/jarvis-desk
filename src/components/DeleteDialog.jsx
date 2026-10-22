@@ -1,11 +1,13 @@
-export default function DeleteDialog({ task, onConfirm, onClose }) {
+export default function DeleteDialog({
+  task,
+  onConfirm,
+  onClose,
+  busy,
+  error,
+}) {
   return (
-    <dialog
-      className="task-dialog delete-dialog"
-      ref={(node) => {
-        if (node && !node.open) node.showModal();
-      }}
-      onCancel={onClose}
+    <section
+      className="delete-dialog"
       aria-labelledby="delete-heading"
       aria-describedby="delete-description"
     >
@@ -17,13 +19,24 @@ export default function DeleteDialog({ task, onConfirm, onClose }) {
           className="secondary-button"
           onClick={onClose}
           autoFocus
+          disabled={busy}
         >
           Отмена
         </button>
-        <button type="button" className="delete-button" onClick={onConfirm}>
-          Удалить задачу
+        <button
+          type="button"
+          className="delete-button"
+          disabled={busy}
+          onClick={onConfirm}
+        >
+          {busy ? "Удаляем…" : "Подтвердить удаление"}
         </button>
       </div>
-    </dialog>
+      {error && (
+        <p role="alert" className="field-error">
+          {error}
+        </p>
+      )}
+    </section>
   );
 }

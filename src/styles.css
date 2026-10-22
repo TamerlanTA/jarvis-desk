@@ -1008,3 +1008,193 @@ input::placeholder {
     scroll-behavior: auto !important;
   }
 }
+
+.sort-row {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+.sort-row label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.sort-row select {
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+.task-title {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  overflow-wrap: anywhere;
+}
+.task-title:hover {
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.task-editor {
+  width: 100%;
+  max-height: none;
+  margin-top: 24px;
+  box-shadow: none;
+}
+.task-editor fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.task-editor textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 110px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 15px;
+  color: var(--ink);
+  background: #fff;
+  font: inherit;
+  font-size: 16px;
+}
+.task-editor .dialog-actions {
+  justify-content: flex-start;
+}
+.delete-dialog {
+  margin: 24px 0;
+  padding: 22px;
+  border: 1px solid #e7c7cd;
+  border-radius: 16px;
+  background: #fffafb;
+}
+.delete-dialog h2 {
+  font-size: 20px;
+}
+.delete-dialog .dialog-actions {
+  justify-content: flex-start;
+  margin-top: 16px;
+}
+.detail-view {
+  margin-top: 24px;
+}
+.text-button {
+  border: 0;
+  padding: 10px 0;
+  color: var(--blue);
+  background: transparent;
+  font-size: 14px;
+}
+.detail-view h2 {
+  margin: 22px 0 16px;
+  overflow-wrap: anywhere;
+}
+.detail-description {
+  color: var(--muted);
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.task-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin: 28px 0;
+}
+.task-details dt {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.task-details dd {
+  margin: 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+.detail-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.pagination {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pagination p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+.pagination-buttons {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.pagination-buttons button {
+  min-width: 36px;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 13px;
+}
+.pagination-buttons button:hover {
+  background: var(--soft);
+}
+.pagination-buttons button[aria-current="page"] {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+}
+.list-loading,
+.list-error {
+  padding-block: 36px;
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.success-message {
+  font-size: 13px;
+  color: #386b43;
+  line-height: 1.6;
+  margin-block: 20px 0;
+}
+@media (max-width: 1050px) {
+  .sort-row,
+  .sort-row label {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .sort-row {
+    gap: 10px;
+  }
+  .sort-row label {
+    gap: 6px;
+  }
+}
+@media (max-width: 600px) {
+  .task-editor {
+    padding: 20px 0;
+    border: 0;
+  }
+  .task-details {
+    gap: 20px;
+  }
+  .pagination-buttons {
+    gap: 5px;
+  }
+  .pagination-buttons button {
+    padding: 8px 10px;
+  }
+}

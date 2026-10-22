@@ -1,18 +1,16 @@
-export default function TaskSummary({ tasks }) {
-  const completed = tasks.filter((task) => task.completed).length;
-  const progress = tasks.length
-    ? Math.round((completed / tasks.length) * 100)
-    : 0;
+export default function TaskSummary({ summary }) {
+  const { total, completed } = summary;
+  const progress = total ? Math.round((completed / total) * 100) : 0;
 
   return (
     <section className="task-summary" aria-label="Прогресс всех задач">
       <div className="summary-counts">
         <span>
-          Всего <strong>{tasks.length}</strong>
+          Всего <strong>{total}</strong>
         </span>
         <span className="separator">/</span>
         <span>
-          В работе <strong>{tasks.length - completed}</strong>
+          В работе <strong>{total - completed}</strong>
         </span>
         <span className="separator">/</span>
         <span>

@@ -8,6 +8,10 @@ export default function TaskFilters({
   onCategoryChange,
   status,
   onStatusChange,
+  sort,
+  onSortChange,
+  pageSize,
+  onPageSizeChange,
 }) {
   return (
     <div className="task-filters">
@@ -32,6 +36,35 @@ export default function TaskFilters({
           <option value="active">В работе</option>
           <option value="completed">Готово</option>
         </select>
+      </div>
+      <div className="sort-row">
+        <label>
+          Сортировка
+          <select
+            aria-label="Сортировка задач"
+            value={sort}
+            onChange={(event) => onSortChange(event.target.value)}
+          >
+            <option value="newest">Сначала новые</option>
+            <option value="dueDate">По сроку</option>
+            <option value="priority">По приоритету</option>
+            <option value="title">По названию</option>
+          </select>
+        </label>
+        <label>
+          На странице
+          <select
+            aria-label="Задач на странице"
+            value={pageSize}
+            onChange={(event) => onPageSizeChange(Number(event.target.value))}
+          >
+            {[6, 12, 24].map((size) => (
+              <option value={size} key={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
       <div
         className="category-filters"

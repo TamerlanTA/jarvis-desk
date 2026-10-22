@@ -13,8 +13,11 @@ export default function TaskForm({ task, onSave, onClose }) {
     category: task?.category ?? CATEGORIES[0],
     priority: task?.priority ?? PRIORITIES[1],
     dueDate: task?.dueDate ?? getAlmatyDate(),
+    description: task?.description ?? "",
   });
   const [errors, setErrors] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   function changeField(event) {
     const { name, value } = event.target;
@@ -22,24 +25,28 @@ export default function TaskForm({ task, onSave, onClose }) {
     setErrors((current) => ({ ...current, [name]: undefined }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const nextErrors = validateTask(values);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
-    onSave({ ...values, title: values.title.trim() });
+    setIsSaving(true);
+    setSaveError("");
+    try {
+      await onSave({
+        ...values,
+        title: values.title.trim(),
+        description: values.description.trim(),
+      });
+    } catch (failure) {
+      setSaveError(failure.message);
+      setIsSaving(false);
+    }
   }
 
   return (
-    <dialog
-      className="task-dialog"
-      ref={(node) => {
-        if (node && !node.open) {
-          node.showModal();
-          node.querySelector("input")?.focus();
-        }
-      }}
-      onCancel={onClose}
+    <section
+      className="task-dialog task-editor"
       aria-labelledby="task-form-heading"
     >
       <div className="dialog-heading">
@@ -51,90 +58,120 @@ export default function TaskForm({ task, onSave, onClose }) {
           className="icon-button"
           onClick={onClose}
           aria-label="Закрыть форму"
+          disabled={isSaving}
         >
           <Icon name="close" />
         </button>
       </div>
       <form onSubmit={handleSubmit} noValidate>
-        <label htmlFor="task-title">Название задачи</label>
-        <input
-          id="task-title"
-          name="title"
-          value={values.title}
-          onChange={changeField}
-          placeholder="Что нужно сделать?"
-          maxLength={120}
-          autoFocus
-          aria-invalid={Boolean(errors.title)}
-          aria-describedby={errors.title ? "title-error" : undefined}
-        />
-        {errors.title && (
-          <p className="field-error" id="title-error" role="alert">
-            {errors.title}
+        <fieldset disabled={isSaving}>
+          <label htmlFor="task-title">Название задачи</label>
+          <input
+            id="task-title"
+            name="title"
+            value={values.title}
+            onChange={changeField}
+            placeholder="Что нужно сделать?"
+            maxLength={120}
+            autoFocus
+            aria-invalid={Boolean(errors.title)}
+            aria-describedby={errors.title ? "title-error" : undefined}
+          />
+          {errors.title && (
+            <p className="field-error" id="title-error" role="alert">
+              {errors.title}
+            </p>
+          )}
+          <label htmlFor="task-description">Описание</label>
+          <textarea
+            id="task-description"
+            name="description"
+            value={values.description}
+            onChange={changeField}
+            maxLength={1000}
+            rows={4}
+            aria-invalid={Boolean(errors.description)}
+            aria-describedby={
+              errors.description ? "description-error" : undefined
+            }
+          />
+          {errors.description && (
+            <p className="field-error" id="description-error" role="alert">
+              {errors.description}
+            </p>
+          )}
+          <div className="form-columns">
+            <div>
+              <label htmlFor="task-category">Направление</label>
+              <select
+                id="task-category"
+                name="category"
+                value={values.category}
+                onChange={changeField}
+              >
+                {CATEGORIES.map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
+              </select>
+              {errors.category && (
+                <p className="field-error" role="alert">
+                  {errors.category}
+                </p>
+              )}
+            </div>
+            <div>
+              <label htmlFor="task-priority">Приоритет</label>
+              <select
+                id="task-priority"
+                name="priority"
+                value={values.priority}
+                onChange={changeField}
+              >
+                {PRIORITIES.map((item) => (
+                  <option key={item}>{item}</option>
+                ))}
+              </select>
+              {errors.priority && (
+                <p className="field-error" role="alert">
+                  {errors.priority}
+                </p>
+              )}
+            </div>
+          </div>
+          <label htmlFor="task-date">Срок</label>
+          <input
+            id="task-date"
+            type="date"
+            name="dueDate"
+            value={values.dueDate}
+            onChange={changeField}
+            aria-invalid={Boolean(errors.dueDate)}
+            aria-describedby={errors.dueDate ? "date-error" : undefined}
+          />
+          {errors.dueDate && (
+            <p className="field-error" id="date-error" role="alert">
+              {errors.dueDate}
+            </p>
+          )}
+          <div className="dialog-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={onClose}
+            >
+              Отмена
+            </button>
+            <button className="primary-button" type="submit">
+              {isSaving ? "Сохраняем…" : task ? "Сохранить" : "Добавить задачу"}
+            </button>
+          </div>
+        </fieldset>
+        {saveError && (
+          <p className="field-error" role="alert">
+            {saveError}
           </p>
         )}
-        <div className="form-columns">
-          <div>
-            <label htmlFor="task-category">Направление</label>
-            <select
-              id="task-category"
-              name="category"
-              value={values.category}
-              onChange={changeField}
-            >
-              {CATEGORIES.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
-            {errors.category && (
-              <p className="field-error" role="alert">
-                {errors.category}
-              </p>
-            )}
-          </div>
-          <div>
-            <label htmlFor="task-priority">Приоритет</label>
-            <select
-              id="task-priority"
-              name="priority"
-              value={values.priority}
-              onChange={changeField}
-            >
-              {PRIORITIES.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </select>
-            {errors.priority && (
-              <p className="field-error" role="alert">
-                {errors.priority}
-              </p>
-            )}
-          </div>
-        </div>
-        <label htmlFor="task-date">Срок</label>
-        <input
-          id="task-date"
-          type="date"
-          name="dueDate"
-          value={values.dueDate}
-          onChange={changeField}
-          aria-invalid={Boolean(errors.dueDate)}
-          aria-describedby={errors.dueDate ? "date-error" : undefined}
-        />
-        {errors.dueDate && (
-          <p className="field-error" id="date-error" role="alert">
-            {errors.dueDate}
-          </p>
-        )}
-        <div className="dialog-actions">
-          <button className="secondary-button" type="button" onClick={onClose}>
-            Отмена
-          </button>
-          <button className="primary-button" type="submit">
-            {task ? "Сохранить" : "Добавить задачу"}
-          </button>
-        </div>
       </form>
-    </dialog>
+    </section>
   );
 }
